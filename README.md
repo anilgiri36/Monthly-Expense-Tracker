@@ -4,41 +4,54 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roommate Expense Tracker</title>
 <style>
-body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:0; background:#f7f9fc; color:#333; }
-.container { max-width: 1000px; margin: 40px auto; padding:30px; background:#fff; border-radius:15px; box-shadow:0 8px 20px rgba(0,0,0,0.1); position:relative; }
-h1 { text-align:center; font-size:2rem; color:#E91E63; margin-bottom:30px; }
-.section { background:#f9f9f9; padding:25px; border-radius:12px; margin-bottom:25px; box-shadow:0 3px 8px rgba(0,0,0,0.05); }
-input, select, button { width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:1rem; }
-input:focus, select:focus { border-color:#E91E63; outline:none; }
-button { background:#E91E63; color:#fff; font-weight:bold; border:none; cursor:pointer; transition:.3s; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
-button:hover { background:#d81b60; }
-#userInfo { position:absolute; top:20px; right:20px; display:flex; align-items:center; gap:10px; background:#fff; padding:10px 15px; border-radius:12px; box-shadow:0 3px 8px rgba(0,0,0,0.15); }
-#userInfo img { width:45px; height:45px; border-radius:50%; border:2px solid #E91E63; }
-#userInfo div { font-weight:bold; color:#E91E63; }
-#userInfo button { background:none; border:none; font-size:20px; color:#E91E63; cursor:pointer; }
-.totals { display:flex; gap:15px; flex-wrap:wrap; margin-bottom:20px; }
-.totals div { flex:1 1 28%; background:#fff; padding:20px; border-radius:12px; text-align:center; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
-.owes { color:green; }
-.owed { color:red; }
-table { width:100%; border-collapse:collapse; border-radius:10px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.05); }
-th, td { padding:12px; text-align:center; }
-th { background:#E91E63; color:#fff; font-weight:600; }
-tr:nth-child(even) { background:#f4f4f4; }
-.delete-btn { color:#fff; background:red; border-radius:5px; padding:6px 12px; cursor:pointer; transition:.3s; }
-.delete-btn:hover { background:darkred; }
-@media(max-width:768px){ .totals { flex-direction:column; } }
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f7f8; margin:0; padding:0; position:relative; }
+h1,h2,h3{text-align:center;color:#333;}
+.container{max-width:900px;margin:20px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
+input,select,button{padding:10px;margin:5px 0;width:100%;border-radius:5px;border:1px solid #ccc;}
+button{background:#E91E63;color:white;font-weight:bold;cursor:pointer;border:none;transition:.3s;}
+button:hover{background:#d81b60;}
+table{border-collapse:collapse;width:100%;margin-top:20px;}
+th,td{border:1px solid #ddd;padding:10px;text-align:center;}
+th{background-color:#E91E63;color:white;}
+tr:nth-child(even){background-color:#f9f9f9;}
+.totals{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
+.totals div{background:#E91E63;color:white;padding:15px;border-radius:8px;width:28%;text-align:center;font-weight:bold;margin-bottom:10px;}
+.delete-btn{color:white;background:red;border-radius:5px;padding:5px 10px;cursor:pointer;}
+.section{background:#fafafa;padding:15px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 5px rgba(0,0,0,0.05);}
+.hidden{display:none;}
+.user-row{display:flex;justify-content:space-between;align-items:center;margin:5px 0;}
+.user-row button{width:auto;margin-left:10px;padding:5px 10px;}
+#userInfo { position:absolute; top:20px; right:20px; font-weight:bold; color:#E91E63; }
+#userInfo a { color:#E91E63; text-decoration:underline; cursor:pointer; margin-left:10px; }
+.owed { color:red; font-weight:bold; }
+.owes { color:green; font-weight:bold; }
+
+/* Home Page Button */
+#homePage a.button-link { text-decoration:none; background:#E91E63; color:white; padding:10px 20px; border-radius:5px; font-weight:bold; }
 </style>
 </head>
 <body>
+
+<!-- Top Right User Info -->
+<div id="userInfo">
+  <a href="#signinDiv" id="adminLoginLink">Sign in as Admin</a>
+  <span id="userNameDisplay" class="hidden"></span>
+  <a href="#" id="signOutLink" class="hidden">Log Out</a>
+</div>
+
+<!-- HOME PAGE -->
+<div id="homePage" class="section">
+  <h1>Welcome to Roommate Expense Tracker</h1>
+  <p style="text-align:center;">Easily track your shared expenses with roommates.</p>
+  <div style="text-align:center; margin-top:20px;">
+    <a href="#signinDiv" class="button-link">Sign In</a>
+  </div>
+</div>
+
 <div class="container">
 <h1>Roommate Expense Tracker</h1>
 
-<div id="userInfo" class="hidden">
-  <img id="userAvatar" src="https://i.pravatar.cc/45" alt="Avatar">
-  <div id="userNameDisplay"></div>
-  <button id="signOutBtn" title="Log Out">⎋</button>
-</div>
-
+<!-- SIGN-IN FORM -->
 <div id="signinDiv" class="section">
   <h2>Sign In</h2>
   <form id="signinForm">
@@ -48,24 +61,30 @@ tr:nth-child(even) { background:#f4f4f4; }
   </form>
 </div>
 
+<!-- ADMIN PANEL -->
 <div id="adminDiv" class="hidden">
+
   <div class="section">
     <h2>Admin Panel - Roommates</h2>
     <form id="adminForm">
       <input type="text" id="roommateName1" placeholder="Roommate 1 Username">
-      <input type="text" id="roommateMobile1" placeholder="Roommate 1 Mobile">
+      <input type="text" id="roommateMobile1" placeholder="Roommate 1 Mobile (optional)">
       <input type="password" id="roommatePass1" placeholder="Roommate 1 Password">
+      
       <input type="text" id="roommateName2" placeholder="Roommate 2 Username">
-      <input type="text" id="roommateMobile2" placeholder="Roommate 2 Mobile">
+      <input type="text" id="roommateMobile2" placeholder="Roommate 2 Mobile (optional)">
       <input type="password" id="roommatePass2" placeholder="Roommate 2 Password">
+      
       <input type="text" id="roommateName3" placeholder="Roommate 3 Username">
-      <input type="text" id="roommateMobile3" placeholder="Roommate 3 Mobile">
+      <input type="text" id="roommateMobile3" placeholder="Roommate 3 Mobile (optional)">
       <input type="password" id="roommatePass3" placeholder="Roommate 3 Password">
+      
       <button type="submit">Save Roommates</button>
     </form>
     <h3>Existing Roommates</h3>
     <div id="roommateList"></div>
   </div>
+
   <div class="section">
     <h2>Change Admin Password</h2>
     <form id="changePassForm">
@@ -77,13 +96,16 @@ tr:nth-child(even) { background:#f4f4f4; }
   </div>
 </div>
 
+<!-- EXPENSE TRACKER -->
 <div id="trackerDiv" class="hidden">
+
   <div class="totals">
     <div id="total1">Roommate 1: ₹0</div>
     <div id="total2">Roommate 2: ₹0</div>
     <div id="total3">Roommate 3: ₹0</div>
     <div id="totalAll">Total: ₹0</div>
   </div>
+
   <div class="section">
     <h2>Add Expense</h2>
     <form id="expenseForm">
@@ -94,17 +116,15 @@ tr:nth-child(even) { background:#f4f4f4; }
       <button type="submit">Add Expense</button>
     </form>
   </div>
+
   <table id="expenseTable">
     <thead>
       <tr><th>Date</th><th>Name</th><th>Amount (₹)</th><th>Description</th><th>Action</th></tr>
     </thead>
     <tbody></tbody>
   </table>
-</div>
 
-<footer style="margin:20px 0;color:gray;text-align:center;">
- <p>© 2026 Anil Giri. All rights reserved.</p>
-</footer>
+</div>
 
 <script>
 // Initialize users
@@ -117,6 +137,7 @@ let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 let currentUser = null;
 let roommates = JSON.parse(localStorage.getItem('roommates')) || [];
 
+// DOM Elements
 const signinDiv = document.getElementById('signinDiv');
 const adminDiv = document.getElementById('adminDiv');
 const trackerDiv = document.getElementById('trackerDiv');
@@ -131,23 +152,27 @@ const total2P = document.getElementById('total2');
 const total3P = document.getElementById('total3');
 const totalAllP = document.getElementById('totalAll');
 const roommateListDiv = document.getElementById('roommateList');
+
 const userInfoDiv = document.getElementById('userInfo');
-const userAvatar = document.getElementById('userAvatar');
 const userNameDisplay = document.getElementById('userNameDisplay');
-const signOutBtn = document.getElementById('signOutBtn');
+const signOutLink = document.getElementById('signOutLink');
+const adminLoginLink = document.getElementById('adminLoginLink');
 
 // Sign-in
 signinForm.addEventListener('submit', e=>{
   e.preventDefault();
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
-  const user = users.find(u=>(u.username===username || u.mobile===username) && u.password===password);
-  if(!user){ alert('Invalid credentials'); return; }
+  const user = users.find(u=>(u.username===username || u.mobile===username));
+  if(!user || user.password!==password){ alert('Invalid credentials'); return; }
   currentUser = user;
+
   signinDiv.classList.add('hidden');
-  userInfoDiv.classList.remove('hidden');
+  adminLoginLink.style.display = 'none';
   userNameDisplay.textContent = currentUser.username;
-  userAvatar.src = `https://i.pravatar.cc/45?u=${currentUser.username}`;
+  userNameDisplay.classList.remove('hidden');
+  signOutLink.classList.remove('hidden');
+
   if(user.role==='admin'){
     adminDiv.classList.remove('hidden');
     updateRoommateList();
@@ -158,30 +183,33 @@ signinForm.addEventListener('submit', e=>{
   }
 });
 
-// Sign out
-signOutBtn.addEventListener('click', ()=>{
-  location.reload();
+// Sign Out
+signOutLink.addEventListener('click', ()=>{
+  currentUser=null;
+  userNameDisplay.classList.add('hidden');
+  signOutLink.classList.add('hidden');
+  adminLoginLink.style.display='inline';
+  signinDiv.classList.remove('hidden');
+  adminDiv.classList.add('hidden');
+  trackerDiv.classList.add('hidden');
 });
 
 // Admin sets roommate accounts
 adminForm.addEventListener('submit', e=>{
   e.preventDefault();
-  let tempRoommates = [];
+  roommates = [];
   const names = [document.getElementById('roommateName1').value.trim(), document.getElementById('roommateName2').value.trim(), document.getElementById('roommateName3').value.trim()];
   const mobiles = [document.getElementById('roommateMobile1').value.trim(), document.getElementById('roommateMobile2').value.trim(), document.getElementById('roommateMobile3').value.trim()];
   const passwords = [document.getElementById('roommatePass1').value, document.getElementById('roommatePass2').value, document.getElementById('roommatePass3').value];
 
   for(let i=0;i<3;i++){
     if(names[i] && passwords[i]){
-      // Check duplicates
-      if(users.some(u=>u.username===names[i])) { alert(`Username ${names[i]} already exists`); return; }
-      if(mobiles[i] && users.some(u=>u.mobile===mobiles[i])) { alert(`Mobile ${mobiles[i]} already exists`); return; }
-      tempRoommates.push({username:names[i],mobile:mobiles[i] || '',password:passwords[i],role:'roommate'});
+      if(users.some(u=>u.username===names[i])){ alert(`Username ${names[i]} already exists`); return; }
+      if(mobiles[i] && users.some(u=>u.mobile===mobiles[i])){ alert(`Mobile ${mobiles[i]} already exists`); return; }
+      roommates.push({username:names[i],mobile:mobiles[i]||'',password:passwords[i],role:'roommate'});
     }
   }
-  // Update users and roommates
-  users = users.filter(u=>u.role!=='roommate').concat(tempRoommates);
-  roommates = tempRoommates;
+  users = users.filter(u=>u.role!=='roommate').concat(roommates);
   localStorage.setItem('users', JSON.stringify(users));
   localStorage.setItem('roommates', JSON.stringify(roommates));
   updateRoommateList();
@@ -189,14 +217,14 @@ adminForm.addEventListener('submit', e=>{
   adminForm.reset();
 });
 
-// Change Admin Password
+// Admin changes password
 changePassForm.addEventListener('submit', e=>{
   e.preventDefault();
   const curr = document.getElementById('currentPass').value;
   const newP = document.getElementById('newPass').value;
   const confirmP = document.getElementById('confirmPass').value;
-  if(curr!==currentUser.password){ alert('Current password incorrect'); return; }
-  if(newP!==confirmP){ alert('New passwords do not match'); return; }
+  if(curr !== currentUser.password){ alert('Current password incorrect'); return; }
+  if(newP !== confirmP){ alert('New passwords do not match'); return; }
   currentUser.password = newP;
   const idx = users.findIndex(u=>u.username==='admin');
   users[idx].password = newP;
@@ -205,32 +233,32 @@ changePassForm.addEventListener('submit', e=>{
   changePassForm.reset();
 });
 
-// Update Name Dropdown
+// Update name dropdown
 function updateNameOptions(){
   nameSelect.innerHTML = '';
-  if(currentUser.role==='admin'){
-    roommates.forEach(r=>{ const opt=document.createElement('option'); opt.value=r.username; opt.textContent=r.username; nameSelect.appendChild(opt); });
-  } else { 
-    const opt = document.createElement('option'); opt.value=currentUser.username; opt.textContent=currentUser.username; nameSelect.appendChild(opt);
-  }
+  roommates.forEach(r=>{
+    const opt = document.createElement('option');
+    opt.value = r.username; opt.textContent = r.username;
+    nameSelect.appendChild(opt);
+  });
 }
 
-// Add Expense
+// Add expense
 expenseForm.addEventListener('submit', e=>{
   e.preventDefault();
   const date = document.getElementById('date').value;
   const name = document.getElementById('name').value;
   const amount = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value.trim();
-  if(!date || !name || !amount || amount<=0){ alert('Fill all fields correctly'); return; }
-  if(currentUser.role!=='admin' && name!==currentUser.username){ alert('You can only add your own expense'); return; }
+  if(!date || !name || !amount || amount <=0){ alert('Fill all fields correctly'); return; }
+  if(currentUser.role!=='admin' && name!==currentUser.username){ alert('You can only add expense for yourself'); return; }
   expenses.push({date,name,amount,desc});
   localStorage.setItem('expenses', JSON.stringify(expenses));
   updateTable();
   expenseForm.reset();
 });
 
-// Delete Expense
+// Delete expense
 function deleteExpense(index){
   if(currentUser.role!=='admin'){ alert('Only admin can delete'); return; }
   if(confirm('Are you sure to delete this expense?')){
@@ -240,39 +268,47 @@ function deleteExpense(index){
   }
 }
 
-// Update Table & Totals
+// Update table & totals
 function updateTable(){
-  expenseTableBody.innerHTML='';
-  let total={}; roommates.forEach(r=>total[r.username]=0);
-  expenses.forEach(({date,name,amount,desc},i)=>{
-    const tr=document.createElement('tr');
-    const actionHTML=currentUser.role==='admin'?`<span class="delete-btn" onclick="deleteExpense(${i})">Delete</span>`:'';
-    tr.innerHTML=`<td>${date}</td><td>${name}</td><td>₹${amount}</td><td>${desc||''}</td><td>${actionHTML}</td>`;
+  expenseTableBody.innerHTML = '';
+  let total = {};
+  roommates.forEach(r=>total[r.username]=0);
+  expenses.forEach(({date,name,amount,desc}, i)=>{
+    const tr = document.createElement('tr');
+    const actionHTML = currentUser.role==='admin' ? `<span class="delete-btn" onclick="deleteExpense(${i})">Delete</span>` : '';
+    tr.innerHTML = `<td>${date}</td><td>${name}</td><td>₹${amount}</td><td>${desc||''}</td><td>${actionHTML}</td>`;
     expenseTableBody.appendChild(tr);
     if(total[name]!==undefined) total[name]+=amount;
   });
-  // Calculate owes/owed
   const sumAll = Object.values(total).reduce((a,b)=>a+b,0);
   const avg = sumAll/roommates.length;
-  total1P.innerHTML = `${roommates[0]?.username || 'Roommate 1'}: <span class="${total[roommates[0]?.username]>=avg?'owes':'owed'}">₹${Math.abs(total[roommates[0]?.username]-avg).toFixed(0)}</span>`;
-  total2P.innerHTML = `${roommates[1]?.username || 'Roommate 2'}: <span class="${total[roommates[1]?.username]>=avg?'owes':'owed'}">₹${Math.abs(total[roommates[1]?.username]-avg).toFixed(0)}</span>`;
-  total3P.innerHTML = `${roommates[2]?.username || 'Roommate 3'}: <span class="${total[roommates[2]?.username]>=avg?'owes':'owed'}">₹${Math.abs(total[roommates[2]?.username]-avg).toFixed(0)}</span>`;
-  totalAllP.textContent=`Total: ₹${sumAll}`;
+  roommates.forEach((r,i)=>{
+    const diff = total[r.username]-avg;
+    let text='';
+    if(diff>0) text=`Owed ₹${diff.toFixed(2)}`;
+    else if(diff<0) text=`Owes ₹${(-diff).toFixed(2)}`;
+    else text='Settled';
+    const span=`<span class="${diff>0?'owed':'owes'}">${text}</span>`;
+    if(i===0) total1P.innerHTML=`${r.username}: ₹${total[r.username]} ${span}`;
+    if(i===1) total2P.innerHTML=`${r.username}: ₹${total[r.username]} ${span}`;
+    if(i===2) total3P.innerHTML=`${r.username}: ₹${total[r.username]} ${span}`;
+  });
+  totalAllP.textContent = `Total: ₹${sumAll}`;
 }
 
-// Update Roommate List
+// Update roommate list for admin
 function updateRoommateList(){
-  roommateListDiv.innerHTML='';
+  roommateListDiv.innerHTML = '';
   roommates.forEach((r,i)=>{
-    const div=document.createElement('div');
-    div.className='user-row';
-    div.innerHTML=`<span>${r.username}</span><button onclick="deleteRoommate(${i})">Delete</button>`;
+    const div = document.createElement('div');
+    div.className = 'user-row';
+    div.innerHTML = `<span>${r.username}</span><button onclick="deleteRoommate(${i})">Delete</button>`;
     roommateListDiv.appendChild(div);
   });
   updateNameOptions();
 }
 
-// Delete Roommate
+// Delete roommate
 function deleteRoommate(index){
   if(confirm('Are you sure to delete this roommate? This will not delete existing expenses.')){
     const removed = roommates.splice(index,1);
@@ -289,5 +325,11 @@ updateNameOptions();
 updateTable();
 updateRoommateList();
 </script>
+
+<footer style="margin: 20px 0; color: gray; text-align:center;">
+ <p>© 2026 Anil Giri. All rights reserved.</p>
+ <marquee><b style="color: green;">A page created by Anil Giri</b></marquee>
+</footer>
+
 </body>
 </html>
