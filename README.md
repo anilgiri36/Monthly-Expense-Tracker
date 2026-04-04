@@ -1,11 +1,10 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Roommate Expense Tracker</title>
 
-<!-- Firebase SDK -->
+<!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -15,21 +14,24 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 h1,h2,h3{text-align:center;color:#333;}
 .container{max-width:900px;margin:20px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 5px 15px rgba(0,0,0,0.1);}
 input,select,button{padding:10px;margin:5px 0;width:100%;border-radius:5px;border:1px solid #ccc;}
-button{background:#E91E63;color:white;font-weight:bold;cursor:pointer;border:none; transition:.3s;}
+button{background:#E91E63;color:white;font-weight:bold;cursor:pointer;border:none;transition:.3s;}
 button:hover{background:#d81b60;}
 table{border-collapse:collapse;width:100%;margin-top:20px;}
 th,td{border:1px solid #ddd;padding:10px;text-align:center;}
 th{background-color:#E91E63;color:white;}
 tr:nth-child(even){background-color:#f9f9f9;}
 .totals{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
-.totals div{background:#E91E63;color:white;padding:15px;border-radius:8px;width:28%;text-align:center;font-weight:bold;margin-bottom:10px;}
+.totals div{padding:15px;border-radius:8px;width:28%;text-align:center;font-weight:bold;margin-bottom:10px;}
+.totals .owed {background:#4caf50;color:white;}
+.totals .owes {background:#f44336;color:white;}
 .section{background:#fafafa;padding:15px;border-radius:8px;margin-bottom:20px;}
 .hidden{display:none;}
 .user-row{display:flex;justify-content:space-between;margin:5px 0;}
 #userInfo { position:absolute; top:20px; right:20px; font-weight:bold; color:#E91E63; }
-.owes {color:red;} .owed {color:green;}
+#userInfo a{margin-left:10px; color:#E91E63; text-decoration:none;}
 </style>
 </head>
+
 <body>
 
 <div id="userInfo">
@@ -45,57 +47,64 @@ tr:nth-child(even){background-color:#f9f9f9;}
 
 <div class="container">
 
-<!-- SIGN-IN FORM -->
-<div id="signinDiv" class="section hidden">
+<h1>Roommate Expense Tracker</h1>
+
+<div id="signinDiv" class="section">
   <h2>Sign In</h2>
   <form id="signinForm">
-    <input type="email" id="username" placeholder="Email" required>
+    <input type="text" id="username" placeholder="Username or Mobile" required>
     <input type="password" id="password" placeholder="Password" required>
     <button type="submit">Sign In</button>
   </form>
 </div>
 
-<!-- ADMIN PANEL -->
 <div id="adminDiv" class="hidden">
   <div class="section">
     <h2>Admin Panel</h2>
     <form id="adminForm">
-      <h3>Add Roommate</h3>
-      <input type="email" id="roommateEmail" placeholder="Roommate Email" required>
-      <input type="password" id="roommatePassword" placeholder="Set Password" required>
-      <button type="submit">Add Roommate</button>
+      <input type="text" id="roommateName1" placeholder="Roommate 1 Username or Mobile">
+      <input type="password" id="roommatePass1" placeholder="Password">
+      <input type="text" id="roommateName2" placeholder="Roommate 2 Username or Mobile">
+      <input type="password" id="roommatePass2" placeholder="Password">
+      <input type="text" id="roommateName3" placeholder="Roommate 3 Username or Mobile">
+      <input type="password" id="roommatePass3" placeholder="Password">
+      <button type="submit">Save Roommates</button>
     </form>
+    <h3>Existing Roommates</h3>
     <div id="roommateList"></div>
   </div>
 </div>
 
-<!-- EXPENSE TRACKER -->
 <div id="trackerDiv" class="hidden">
+
   <div class="totals">
-    <div id="total1">₹0</div>
-    <div id="total2">₹0</div>
-    <div id="total3">₹0</div>
-    <div id="totalAll">₹0</div>
+    <div id="total1" class="owed">₹0</div>
+    <div id="total2" class="owed">₹0</div>
+    <div id="total3" class="owed">₹0</div>
+    <div id="totalAll" class="owed">₹0</div>
   </div>
 
   <div class="section">
+    <h2>Add Expense</h2>
     <form id="expenseForm">
       <input type="date" id="date" required>
       <select id="name" required></select>
-      <input type="number" id="amount" placeholder="Amount" min="1" required>
+      <input type="number" id="amount" placeholder="Amount (₹)" min="1" required>
+      <input type="text" id="desc" placeholder="Description (optional)">
       <button type="submit">Add Expense</button>
     </form>
   </div>
 
   <table id="expenseTable">
     <thead>
-      <tr><th>Date</th><th>Name</th><th>Amount</th><th>Status</th><th>Action</th></tr>
+      <tr><th>Date</th><th>Name</th><th>Amount (₹)</th><th>Description</th><th>Action</th></tr>
     </thead>
     <tbody></tbody>
   </table>
-</div>
 
 </div>
+
+</div> <!-- container -->
 
 <footer style="text-align:center; margin:20px; color:gray;">
   <p>© 2026 Anil Giri. All rights reserved.</p>
@@ -103,7 +112,7 @@ tr:nth-child(even){background-color:#f9f9f9;}
 </footer>
 
 <script>
-// Firebase config
+// ---------- Firebase Config ----------
 const firebaseConfig = {
   apiKey: "AIzaSyDe_RpVPea__Zjsxjy1BqX4xL56pSssAeY",
   authDomain: "roommateexpensetracker.firebaseapp.com",
@@ -116,22 +125,14 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
-const database = firebase.database();
+const db = firebase.database();
 
-// DOM
-const homePage = document.getElementById('homePage');
+// ---------- DOM Elements ----------
 const signinDiv = document.getElementById('signinDiv');
 const adminDiv = document.getElementById('adminDiv');
 const trackerDiv = document.getElementById('trackerDiv');
-const userInfo = document.getElementById('userInfo');
-const adminLoginLink = document.getElementById('adminLoginLink');
-const userNameDisplay = document.getElementById('userNameDisplay');
-const signOutLink = document.getElementById('signOutLink');
 const signinForm = document.getElementById('signinForm');
 const adminForm = document.getElementById('adminForm');
-const roommateEmailInput = document.getElementById('roommateEmail');
-const roommatePasswordInput = document.getElementById('roommatePassword');
-const roommateListDiv = document.getElementById('roommateList');
 const expenseForm = document.getElementById('expenseForm');
 const nameSelect = document.getElementById('name');
 const expenseTableBody = document.querySelector('#expenseTable tbody');
@@ -139,148 +140,163 @@ const total1P = document.getElementById('total1');
 const total2P = document.getElementById('total2');
 const total3P = document.getElementById('total3');
 const totalAllP = document.getElementById('totalAll');
+const roommateListDiv = document.getElementById('roommateList');
+const userNameDisplay = document.getElementById('userNameDisplay');
+const signOutLink = document.getElementById('signOutLink');
+const adminLoginLink = document.getElementById('adminLoginLink');
 
+// ---------- Global ----------
 let currentUser = null;
 let roommates = [];
+let expenses = [];
 
-// Show Sign in form
-adminLoginLink.addEventListener('click', e=>{
+// ---------- Firebase Auth ----------
+signinForm.addEventListener('submit', e=>{
   e.preventDefault();
-  signinDiv.classList.remove('hidden');
-  homePage.classList.add('hidden');
-});
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
 
-// Sign out
-signOutLink.addEventListener('click', e=>{
-  e.preventDefault();
-  auth.signOut();
-  currentUser=null;
-  userNameDisplay.classList.add('hidden');
-  signOutLink.classList.add('hidden');
-  adminLoginLink.classList.remove('hidden');
-  homePage.classList.remove('hidden');
-  trackerDiv.classList.add('hidden');
-  adminDiv.classList.add('hidden');
-});
-
-// Listen auth state
-auth.onAuthStateChanged(user=>{
-  if(user){
-    currentUser = user;
-    userNameDisplay.textContent = user.email;
+  auth.signInWithEmailAndPassword(username, password)
+  .then(cred=>{
+    currentUser = cred.user;
+    userNameDisplay.textContent = username;
     userNameDisplay.classList.remove('hidden');
     signOutLink.classList.remove('hidden');
     adminLoginLink.classList.add('hidden');
     signinDiv.classList.add('hidden');
     homePage.classList.add('hidden');
-    // check if admin
-    if(user.email === 'admin@example.com'){
-      adminDiv.classList.remove('hidden');
-    } else {
-      trackerDiv.classList.remove('hidden');
-    }
-    loadRoommates();
-    loadExpenses();
-  } else {
-    currentUser=null;
-  }
+
+    // Fetch user role
+    db.ref('users/' + currentUser.uid).once('value').then(snapshot=>{
+      const data = snapshot.val();
+      if(!data) { alert('User role not found'); return; }
+      if(data.role==='admin'){
+        adminDiv.classList.remove('hidden');
+      } else {
+        trackerDiv.classList.remove('hidden');
+      }
+      loadRoommates();
+      loadExpenses();
+    });
+  })
+  .catch(err=>alert(err.message));
 });
 
-// Admin add roommate
-adminForm.addEventListener('submit', e=>{
+// ---------- Sign Out ----------
+signOutLink.addEventListener('click', e=>{
   e.preventDefault();
-  const email = roommateEmailInput.value.trim();
-  const password = roommatePasswordInput.value.trim();
-  if(!email || !password) return alert("Email and password required.");
-
-  // Check duplicate in DB
-  database.ref('roommates').orderByChild('username').equalTo(email).once('value', snapshot=>{
-    if(snapshot.exists()) return alert("User already exists!");
-    
-    // Create Firebase user
-    auth.createUserWithEmailAndPassword(email,password)
-      .then(cred=>{
-        database.ref('roommates').push({username: email});
-        alert("Roommate added!");
-        roommateEmailInput.value=''; roommatePasswordInput.value='';
-        loadRoommates();
-      })
-      .catch(err=>alert(err.message));
+  auth.signOut().then(()=>{
+    location.reload();
   });
 });
 
-// Load roommates into select and list
+// ---------- Admin Adds Roommates ----------
+adminForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const names = [
+    document.getElementById('roommateName1').value.trim(),
+    document.getElementById('roommateName2').value.trim(),
+    document.getElementById('roommateName3').value.trim()
+  ];
+  const passwords = [
+    document.getElementById('roommatePass1').value,
+    document.getElementById('roommatePass2').value,
+    document.getElementById('roommatePass3').value
+  ];
+
+  names.forEach((name,i)=>{
+    if(name && passwords[i]){
+      // Check duplicates
+      db.ref('users').orderByChild('username').equalTo(name).once('value',snap=>{
+        if(snap.exists()){ alert('Username exists: ' + name); return; }
+        auth.createUserWithEmailAndPassword(name,passwords[i])
+        .then(userCred=>{
+          db.ref('users/' + userCred.user.uid).set({username:name,role:'roommate'});
+          loadRoommates();
+        })
+        .catch(err=>alert(err.message));
+      });
+    }
+  });
+  adminForm.reset();
+});
+
+// ---------- Load Roommates ----------
 function loadRoommates(){
-  database.ref('roommates').once('value', snap=>{
+  db.ref('users').once('value').then(snap=>{
     roommates=[];
-    nameSelect.innerHTML='';
     roommateListDiv.innerHTML='';
+    nameSelect.innerHTML='';
     snap.forEach(child=>{
-      const r = child.val(); roommates.push(r.username);
-      // dropdown
-      if(currentUser.email===r.username || currentUser.email==='admin@example.com'){
-        const opt = document.createElement('option'); opt.value=r.username; opt.textContent=r.username;
+      const u = child.val();
+      if(u.role==='roommate'){
+        roommates.push({uid:child.key, username:u.username});
+        const opt = document.createElement('option');
+        opt.value = u.username; opt.textContent = u.username;
         nameSelect.appendChild(opt);
+        // show in admin list
+        const div = document.createElement('div');
+        div.className='user-row';
+        div.innerHTML=`<span>${u.username}</span>`;
+        roommateListDiv.appendChild(div);
       }
-      // list
-      const div = document.createElement('div'); div.className='user-row';
-      div.textContent=r.username;
-      roommateListDiv.appendChild(div);
     });
   });
 }
 
-// Expenses
+// ---------- Add Expense ----------
 expenseForm.addEventListener('submit', e=>{
   e.preventDefault();
   const date = document.getElementById('date').value;
-  const name = nameSelect.value;
+  const name = document.getElementById('name').value;
   const amount = parseFloat(document.getElementById('amount').value);
-  if(!date||!name||!amount) return;
-  if(currentUser.email !== name && currentUser.email!=='admin@example.com') return alert("Cannot add expense for others.");
+  const desc = document.getElementById('desc').value.trim();
 
-  database.ref('expenses').push({date,name,amount});
-  expenseForm.reset();
-  loadExpenses();
+  if(name!==currentUser.email && name!==currentUser.phoneNumber){ 
+    alert('You can only add expense for yourself!'); return;
+  }
+
+  const newExpense = {date,name,amount,desc};
+  db.ref('expenses').push(newExpense).then(()=>{
+    loadExpenses();
+    expenseForm.reset();
+  });
 });
 
+// ---------- Load Expenses & Totals ----------
 function loadExpenses(){
-  database.ref('expenses').once('value', snap=>{
+  db.ref('expenses').once('value').then(snap=>{
+    expenses=[];
     expenseTableBody.innerHTML='';
-    const totals = {};
-    roommates.forEach(r=>totals[r]=0);
-    snap.forEach((child,i)=>{
-      const e = child.val();
-      if(totals[e.name]!==undefined) totals[e.name]+=e.amount;
-
-      const tr = document.createElement('tr');
-      let status='', colorClass='';
-      const avg = Object.values(totals).reduce((a,b)=>a+b,0)/roommates.length;
-      const diff = totals[e.name]-avg;
-      if(diff>0){ status='owed'; colorClass='owed'; }
-      else if(diff<0){ status='owes'; colorClass='owes'; }
-      else { status='settled'; colorClass=''; }
-
-      tr.innerHTML = `<td>${e.date}</td><td>${e.name}</td><td>₹${e.amount}</td>
-      <td class="${colorClass}">${status}</td>
-      <td>${currentUser.email==='admin@example.com'?'<span class="delete-btn" onclick="deleteExpense(\''+child.key+'\')">Delete</span>':''}</td>`;
+    let totalMap={};
+    roommates.forEach(r=>totalMap[r.username]=0);
+    snap.forEach(child=>{
+      const exp = child.val();
+      expenses.push(exp);
+      const tr=document.createElement('tr');
+      const actionHTML = currentUser && currentUser.uid===exp.uid ? '' : ''; // only admin delete if implemented
+      tr.innerHTML=`<td>${exp.date}</td><td>${exp.name}</td><td>₹${exp.amount}</td><td>${exp.desc||''}</td><td>${actionHTML}</td>`;
       expenseTableBody.appendChild(tr);
+      if(totalMap[exp.name]!==undefined) totalMap[exp.name]+=exp.amount;
     });
-    // Update totals top
-    total1P.textContent = `${roommates[0]||''}: ₹${totals[roommates[0]]||0}`;
-    total2P.textContent = `${roommates[1]||''}: ₹${totals[roommates[1]]||0}`;
-    total3P.textContent = `${roommates[2]||''}: ₹${totals[roommates[2]]||0}`;
-    totalAllP.textContent = `Total: ₹${Object.values(totals).reduce((a,b)=>a+b,0)}`;
+
+    // Update totals with owes/owed colors
+    let sumAll = Object.values(totalMap).reduce((a,b)=>a+b,0);
+    [total1P,total2P,total3P].forEach((el,i)=>{
+      const uname = roommates[i]?.username||'Roommate '+(i+1);
+      const amt = totalMap[uname]||0;
+      el.textContent = amt>0 ? `Owed ₹${amt}` : `Owes ₹0`;
+      el.className = amt>0 ? 'totals owed' : 'totals owes';
+    });
+    totalAllP.textContent=`Total: ₹${sumAll}`;
   });
 }
 
-// Delete expense
-function deleteExpense(key){
-  if(currentUser.email!=='admin@example.com') return;
-  database.ref('expenses/'+key).remove();
-  loadExpenses();
-}
+// ---------- Load on page start ----------
+loadRoommates();
+loadExpenses();
 
 </script>
+
 </body>
 </html>
