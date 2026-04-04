@@ -27,14 +27,10 @@ button:hover{background:#d81b60;}
 
 table{border-collapse:collapse;width:100%;margin-top:20px;}
 th,td{border:1px solid #ddd;padding:10px;text-align:center;}
-th{background:#E91E63;color:white;}
+th{background-color:#E91E63;color:white;}
 tr:nth-child(even){background-color:#f9f9f9;}
 
-.totals{
-  display:flex;justify-content:space-around;
-  margin-bottom:20px;flex-wrap:wrap;
-}
-
+.totals{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
 .totals div{
   background:#E91E63;color:white;
   padding:15px;border-radius:8px;
@@ -115,6 +111,7 @@ tr:nth-child(even){background-color:#f9f9f9;}
       <input type="date" id="date" required>
       <select id="name"></select>
       <input type="number" id="amount" placeholder="Amount (₹)" required>
+      <input type="text" id="desc" placeholder="Description">
       <button type="submit">Add Expense</button>
     </form>
   </div>
@@ -122,15 +119,17 @@ tr:nth-child(even){background-color:#f9f9f9;}
   <table id="expenseTable">
     <thead>
       <tr>
-        <th>Date</th><th>Name</th>
-        <th>Amount</th><th>Action</th>
+        <th>Date</th>
+        <th>Name</th>
+        <th>Amount</th>
+        <th>Description</th>
+        <th id="actionHeader">Action</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
 </div>
-
 </div>
 
 <!-- FOOTER -->
@@ -160,17 +159,21 @@ const trackerDiv = document.getElementById('trackerDiv');
 const nameSelect = document.getElementById('name');
 const tableBody = document.querySelector('#expenseTable tbody');
 
-// Login
+// LOGIN
 signinForm.addEventListener('submit', e=>{
   e.preventDefault();
   const u = username.value.trim();
   const p = password.value.trim();
-  const user = users.find(x=>x.username===u && x.password===p);
 
+  const user = users.find(x=>x.username===u && x.password===p);
   if(!user){ alert("Invalid login"); return; }
 
   currentUser = user;
   signinDiv.classList.add('hidden');
+
+  // Hide action column for normal users
+  document.getElementById('actionHeader').style.display =
+    currentUser.role === 'admin' ? '' : 'none';
 
   if(user.role==='admin'){
     adminDiv.classList.remove('hidden');
@@ -184,45 +187,82 @@ signinForm.addEventListener('submit', e=>{
 // Load dropdown
 function loadNames(){
   nameSelect.innerHTML='';
-  roommates.forEach(r=>{
+
+  if(currentUser.role === 'admin'){
+    roommates.forEach(r=>{
+      let o=document.createElement('option');
+      o.value = r.username;
+      o.textContent = r.username;
+      nameSelect.appendChild(o);
+    });
+  } else {
     let o=document.createElement('option');
-    o.textContent=r.username;
+    o.value = currentUser.username;
+    o.textContent = currentUser.username;
     nameSelect.appendChild(o);
-  });
+    nameSelect.disabled = true;
+  }
 }
 
 // Add expense
 expenseForm.addEventListener('submit', e=>{
   e.preventDefault();
+
+  const selectedName = name.value;
+
+  // 🔒 Restrict user
+  if(currentUser.role !== 'admin' && selectedName !== currentUser.username){
+    alert("You can only add your own expense!");
+    return;
+  }
+
   expenses.push({
     date:date.value,
-    name:name.value,
-    amount:+amount.value
+    name:selectedName,
+    amount:+amount.value,
+    desc:desc.value
   });
+
   localStorage.setItem('expenses',JSON.stringify(expenses));
   render();
+  expenseForm.reset();
 });
 
 // Render table
 function render(){
   tableBody.innerHTML='';
+
   expenses.forEach((e,i)=>{
+    let actionBtn = '';
+
+    if(currentUser.role === 'admin'){
+      actionBtn = `<span class="delete-btn" onclick="deleteExpense(${i})">Delete</span>`;
+    }
+
     let tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${e.date}</td>
       <td>${e.name}</td>
       <td>₹${e.amount}</td>
-      <td><button onclick="del(${i})">X</button></td>
+      <td>${e.desc || ''}</td>
+      <td>${actionBtn}</td>
     `;
     tableBody.appendChild(tr);
   });
 }
 
-// Delete
-function del(i){
-  expenses.splice(i,1);
-  localStorage.setItem('expenses',JSON.stringify(expenses));
-  render();
+// Delete (admin only)
+function deleteExpense(i){
+  if(!currentUser || currentUser.role !== 'admin'){
+    alert("Only admin can delete!");
+    return;
+  }
+
+  if(confirm("Delete this expense?")){
+    expenses.splice(i,1);
+    localStorage.setItem('expenses',JSON.stringify(expenses));
+    render();
+  }
 }
 </script>
 
