@@ -20,10 +20,10 @@ table{border-collapse:collapse;width:100%;margin-top:20px;}
 th,td{border:1px solid #ddd;padding:10px;text-align:center;}
 th{background-color:#E91E63;color:white;}
 tr:nth-child(even){background-color:#f9f9f9;}
-.totals{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
-.totals div{padding:15px;border-radius:8px;width:28%;text-align:center;font-weight:bold;margin-bottom:10px;}
-.totals .owed {background:#4caf50;color:white;}
-.totals .owes {background:#f44336;color:white;}
+.totals-container{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
+.totals-card{padding:15px;border-radius:8px;text-align:center;font-weight:bold;margin-bottom:10px;width:28%;}
+.totals.owed{background:#4caf50;color:white;}
+.totals.owes{background:#f44336;color:white;}
 .section{background:#fafafa;padding:15px;border-radius:8px;margin-bottom:20px;}
 .hidden{display:none;}
 .user-row{display:flex;justify-content:space-between;margin:5px 0;}
@@ -77,11 +77,12 @@ tr:nth-child(even){background-color:#f9f9f9;}
 
 <div id="trackerDiv" class="hidden">
 
-  <div class="totals">
-    <div id="total1" class="owed">₹0</div>
-    <div id="total2" class="owed">₹0</div>
-    <div id="total3" class="owed">₹0</div>
-    <div id="totalAll" class="owed">₹0</div>
+  <!-- Top Totals -->
+  <div class="totals-container">
+    <div id="total1" class="totals-card totals owed">Roommate 1: ₹0</div>
+    <div id="total2" class="totals-card totals owed">Roommate 2: ₹0</div>
+    <div id="total3" class="totals-card totals owed">Roommate 3: ₹0</div>
+    <div id="totalAll" class="totals-card totals owed">Total Expenses: ₹0</div>
   </div>
 
   <div class="section">
@@ -111,6 +112,7 @@ tr:nth-child(even){background-color:#f9f9f9;}
   <marquee><p style="color:green; font-weight:bold;">A page created by Anil Giri</p></marquee>
 </footer>
 
+<!-- ---------- JS ---------- -->
 <script>
 // ---------- Firebase Config ----------
 const firebaseConfig = {
@@ -150,37 +152,39 @@ const homePage = document.getElementById('homePage');
 let currentUser = null;
 let roommates = [];
 let expenses = [];
+let currentUsername = '';
 
-// ---------- Sign In ----------
-signinForm.addEventListener('submit', e=>{
+// ---------- Auth & Sign In ----------
+signinForm.addEventListener('submit', async e=>{
   e.preventDefault();
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
 
-  auth.signInWithEmailAndPassword(username, password)
-  .then(cred=>{
+  try {
+    const email = username.includes('@') ? username : username + '@example.com';
+    const cred = await auth.signInWithEmailAndPassword(email, password);
     currentUser = cred.user;
-    userNameDisplay.textContent = username;
+
+    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
+    const data = snapshot.val();
+    if(!data) { alert('User data not found'); return; }
+
+    currentUsername = data.username;
+    userNameDisplay.textContent = currentUsername;
     userNameDisplay.classList.remove('hidden');
     signOutLink.classList.remove('hidden');
     adminLoginLink.classList.add('hidden');
     signinDiv.classList.add('hidden');
     homePage.classList.add('hidden');
 
-    db.ref('users/' + currentUser.uid).once('value').then(snapshot=>{
-      const data = snapshot.val();
-      if(!data){ alert('User role not found'); return; }
-      currentUser.role = data.role;
-      if(currentUser.role==='admin'){
-        adminDiv.classList.remove('hidden');
-      } else {
-        trackerDiv.classList.remove('hidden');
-      }
-      loadRoommates();
-      loadExpenses();
-    });
-  })
-  .catch(err=>alert(err.message));
+    if(data.role==='admin') adminDiv.classList.remove('hidden');
+    else trackerDiv.classList.remove('hidden');
+
+    await loadRoommates();
+    await loadExpenses();
+  } catch(err) {
+    alert(err.message);
+  }
 });
 
 // ---------- Sign Out ----------
@@ -190,7 +194,7 @@ signOutLink.addEventListener('click', e=>{
 });
 
 // ---------- Admin Adds Roommates ----------
-adminForm.addEventListener('submit', e=>{
+adminForm.addEventListener('submit', async e=>{
   e.preventDefault();
   const names = [
     document.getElementById('roommateName1').value.trim(),
@@ -203,126 +207,112 @@ adminForm.addEventListener('submit', e=>{
     document.getElementById('roommatePass3').value
   ];
 
-  names.forEach((name,i)=>{
-    if(name && passwords[i]){
-      db.ref('users').orderByChild('username').equalTo(name).once('value',snap=>{
-        if(snap.exists()){ alert('Username exists: ' + name); return; }
-        auth.createUserWithEmailAndPassword(name,passwords[i])
-        .then(userCred=>{
-          db.ref('users/' + userCred.user.uid).set({username:name,role:'roommate'});
-          loadRoommates();
-        })
-        .catch(err=>alert(err.message));
-      });
+  for(let i=0;i<names.length;i++){
+    if(names[i] && passwords[i]){
+      const snap = await db.ref('users').orderByChild('username').equalTo(names[i]).once('value');
+      if(snap.exists()){ alert('Username exists: ' + names[i]); continue; }
+
+      const email = names[i].includes('@') ? names[i] : names[i] + '@example.com';
+      try{
+        const userCred = await auth.createUserWithEmailAndPassword(email,passwords[i]);
+        await db.ref('users/' + userCred.user.uid).set({username:names[i],role:'roommate'});
+        await loadRoommates();
+      } catch(err){ alert(err.message); }
     }
-  });
+  }
   adminForm.reset();
 });
 
 // ---------- Load Roommates ----------
-function loadRoommates(){
-  db.ref('users').once('value').then(snap=>{
-    roommates=[];
-    roommateListDiv.innerHTML='';
-    nameSelect.innerHTML='';
-    snap.forEach(child=>{
-      const u = child.val();
-      if(u.role==='roommate'){
-        roommates.push({uid:child.key, username:u.username});
-        const opt = document.createElement('option');
-        opt.value = u.username; opt.textContent = u.username;
-        nameSelect.appendChild(opt);
-        const div = document.createElement('div');
-        div.className='user-row';
-        div.innerHTML=`<span>${u.username}</span>`;
-        roommateListDiv.appendChild(div);
-      }
-    });
+async function loadRoommates(){
+  const snap = await db.ref('users').once('value');
+  roommates=[];
+  roommateListDiv.innerHTML='';
+  nameSelect.innerHTML='';
+
+  snap.forEach(child=>{
+    const u = child.val();
+    if(u.role==='roommate'){
+      roommates.push({uid:child.key, username:u.username});
+      const opt = document.createElement('option');
+      opt.value = u.username; opt.textContent = u.username;
+      nameSelect.appendChild(opt);
+
+      const div = document.createElement('div');
+      div.className='user-row';
+      div.innerHTML=`<span>${u.username}</span>`;
+      roommateListDiv.appendChild(div);
+    }
   });
 }
 
 // ---------- Add Expense ----------
-expenseForm.addEventListener('submit', e=>{
+expenseForm.addEventListener('submit', async e=>{
   e.preventDefault();
   const date = document.getElementById('date').value;
   const name = document.getElementById('name').value;
   const amount = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value.trim();
 
-  if(name!==currentUser.email && name!==currentUser.phoneNumber){ 
-    alert('You can only add expense for yourself!'); return;
+  if(name!==currentUsername){ 
+    alert('You can only add expense for yourself!'); 
+    return;
   }
 
   const newExpense = {date,name,amount,desc,uid:currentUser.uid};
-  db.ref('expenses').push(newExpense).then(()=>{
-    loadExpenses();
-    expenseForm.reset();
-  });
+  await db.ref('expenses').push(newExpense);
+  expenseForm.reset();
+  loadExpenses();
 });
 
-// ---------- Load Expenses ----------
-function loadExpenses(){
-  db.ref('expenses').once('value').then(snap=>{
-    expenses=[];
-    expenseTableBody.innerHTML='';
-    let totalMap={};
-    roommates.forEach(r=>totalMap[r.username]=0);
+// ---------- Load Expenses & Totals ----------
+async function loadExpenses(){
+  const snap = await db.ref('expenses').once('value');
+  expenses=[];
+  expenseTableBody.innerHTML='';
 
-    snap.forEach(child=>{
-      const exp = child.val();
-      exp.key = child.key;
-      expenses.push(exp);
+  let totalMap={};
+  roommates.forEach(r=>totalMap[r.username]=0);
 
-      // Show row if admin OR if currentUser is owner
-      if(currentUser.role==='admin' || exp.uid === currentUser.uid){
-        const tr=document.createElement('tr');
-        let actionHTML='';
-        if(currentUser.role==='admin'){
-          actionHTML=`<button onclick="editExpense('${exp.key}')">Edit</button>
-                      <button onclick="deleteExpense('${exp.key}')">Delete</button>`;
-        }
-        tr.innerHTML=`<td>${exp.date}</td>
-                      <td>${exp.name}</td>
-                      <td>₹${exp.amount}</td>
-                      <td>${exp.desc||''}</td>
-                      <td>${actionHTML}</td>`;
-        expenseTableBody.appendChild(tr);
-      }
+  snap.forEach(child=>{
+    const exp = child.val();
+    expenses.push({...exp, key:child.key});
+    const tr = document.createElement('tr');
 
-      if(totalMap[exp.name]!==undefined) totalMap[exp.name]+=exp.amount;
-    });
+    let actionHTML = '';
+    if(currentUser && (currentUser.uid===exp.uid || !adminDiv.classList.contains('hidden'))){
+      actionHTML = `<button onclick="deleteExpense('${child.key}')">Delete</button>`;
+    }
 
-    [total1P,total2P,total3P].forEach((el,i)=>{
-      const uname = roommates[i]?.username||'Roommate '+(i+1);
-      const amt = totalMap[uname]||0;
-      el.textContent = amt>0 ? `Owed ₹${amt}` : `Owes ₹0`;
-      el.className = amt>0 ? 'totals owed' : 'totals owes';
-    });
+    tr.innerHTML=`<td>${exp.date}</td><td>${exp.name}</td><td>₹${exp.amount}</td><td>${exp.desc||''}</td><td>${actionHTML}</td>`;
+    expenseTableBody.appendChild(tr);
 
-    totalAllP.textContent=`Total: ₹${Object.values(totalMap).reduce((a,b)=>a+b,0)}`;
+    if(totalMap[exp.name]!==undefined) totalMap[exp.name]+=exp.amount;
   });
+
+  [total1P,total2P,total3P].forEach((el,i)=>{
+    const uname = roommates[i]?.username || 'Roommate '+(i+1);
+    const amt = totalMap[uname] || 0;
+    el.textContent = `${uname}: ₹${amt}`;
+    el.className = amt>0 ? 'totals-card totals owed' : 'totals-card totals owes';
+  });
+
+  const sumAll = Object.values(totalMap).reduce((a,b)=>a+b,0);
+  totalAllP.textContent=`Total Expenses: ₹${sumAll}`;
 }
 
 // ---------- Delete Expense ----------
-function deleteExpense(key){
-  if(confirm('Delete this transaction?')){
-    db.ref('expenses/'+key).remove().then(()=> loadExpenses());
+window.deleteExpense = async (key)=>{
+  if(confirm('Are you sure you want to delete this expense?')){
+    await db.ref('expenses/'+key).remove();
+    loadExpenses();
   }
 }
 
-// ---------- Edit Expense ----------
-function editExpense(key){
-  db.ref('expenses/'+key).once('value').then(snapshot=>{
-    const exp = snapshot.val();
-    const newAmount = prompt(`Edit amount for ${exp.name}`, exp.amount);
-    if(newAmount!==null && !isNaN(newAmount)){
-      db.ref('expenses/'+key).update({amount:parseFloat(newAmount)}).then(()=> loadExpenses());
-    }
-  });
-}
-
-// ---------- On Page Load ----------
+// ---------- Initial Load ----------
 loadRoommates();
 loadExpenses();
-
 </script>
+
+</body>
+</html>
