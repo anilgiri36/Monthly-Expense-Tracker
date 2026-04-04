@@ -112,7 +112,6 @@ tr:nth-child(even){background-color:#f9f9f9;}
   <marquee><p style="color:green; font-weight:bold;">A page created by Anil Giri</p></marquee>
 </footer>
 
-<!-- ---------- JS ---------- -->
 <script>
 // ---------- Firebase Config ----------
 const firebaseConfig = {
@@ -129,7 +128,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// ---------- DOM Elements ----------
+// ---------- DOM ----------
 const signinDiv = document.getElementById('signinDiv');
 const adminDiv = document.getElementById('adminDiv');
 const trackerDiv = document.getElementById('trackerDiv');
@@ -148,26 +147,25 @@ const signOutLink = document.getElementById('signOutLink');
 const adminLoginLink = document.getElementById('adminLoginLink');
 const homePage = document.getElementById('homePage');
 
-// ---------- Global ----------
 let currentUser = null;
 let roommates = [];
-let expenses = [];
 let currentUsername = '';
+let isAdmin = false;
 
-// ---------- Auth & Sign In ----------
+// ---------- Sign In ----------
 signinForm.addEventListener('submit', async e=>{
   e.preventDefault();
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
 
-  try {
+  try{
     const email = username.includes('@') ? username : username + '@example.com';
     const cred = await auth.signInWithEmailAndPassword(email, password);
     currentUser = cred.user;
 
     const snapshot = await db.ref('users/' + currentUser.uid).once('value');
     const data = snapshot.val();
-    if(!data) { alert('User data not found'); return; }
+    if(!data){ alert('User data not found'); return; }
 
     currentUsername = data.username;
     userNameDisplay.textContent = currentUsername;
@@ -177,14 +175,13 @@ signinForm.addEventListener('submit', async e=>{
     signinDiv.classList.add('hidden');
     homePage.classList.add('hidden');
 
-    if(data.role==='admin') adminDiv.classList.remove('hidden');
-    else trackerDiv.classList.remove('hidden');
+    isAdmin = data.role==='admin';
+    if(isAdmin) adminDiv.classList.remove('hidden');
+    trackerDiv.classList.remove('hidden');
 
     await loadRoommates();
     await loadExpenses();
-  } catch(err) {
-    alert(err.message);
-  }
+  }catch(err){ alert(err.message); }
 });
 
 // ---------- Sign Out ----------
@@ -211,16 +208,15 @@ adminForm.addEventListener('submit', async e=>{
     if(names[i] && passwords[i]){
       const snap = await db.ref('users').orderByChild('username').equalTo(names[i]).once('value');
       if(snap.exists()){ alert('Username exists: ' + names[i]); continue; }
-
       const email = names[i].includes('@') ? names[i] : names[i] + '@example.com';
       try{
         const userCred = await auth.createUserWithEmailAndPassword(email,passwords[i]);
         await db.ref('users/' + userCred.user.uid).set({username:names[i],role:'roommate'});
-        await loadRoommates();
-      } catch(err){ alert(err.message); }
+      }catch(err){ alert(err.message); }
     }
   }
   adminForm.reset();
+  await loadRoommates();
 });
 
 // ---------- Load Roommates ----------
@@ -254,8 +250,8 @@ expenseForm.addEventListener('submit', async e=>{
   const amount = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value.trim();
 
-  if(name!==currentUsername){ 
-    alert('You can only add expense for yourself!'); 
+  if(!isAdmin && name!==currentUsername){
+    alert('You can only add expense for yourself!');
     return;
   }
 
@@ -265,29 +261,27 @@ expenseForm.addEventListener('submit', async e=>{
   loadExpenses();
 });
 
-// ---------- Load Expenses & Totals ----------
+// ---------- Load Expenses ----------
 async function loadExpenses(){
   const snap = await db.ref('expenses').once('value');
-  expenses=[];
+  const totalMap = {};
+  roommates.forEach(r=> totalMap[r.username]=0);
   expenseTableBody.innerHTML='';
-
-  let totalMap={};
-  roommates.forEach(r=>totalMap[r.username]=0);
 
   snap.forEach(child=>{
     const exp = child.val();
-    expenses.push({...exp, key:child.key});
-    const tr = document.createElement('tr');
-
-    let actionHTML = '';
-    if(currentUser && (currentUser.uid===exp.uid || !adminDiv.classList.contains('hidden'))){
-      actionHTML = `<button onclick="deleteExpense('${child.key}')">Delete</button>`;
-    }
-
-    tr.innerHTML=`<td>${exp.date}</td><td>${exp.name}</td><td>₹${exp.amount}</td><td>${exp.desc||''}</td><td>${actionHTML}</td>`;
-    expenseTableBody.appendChild(tr);
-
     if(totalMap[exp.name]!==undefined) totalMap[exp.name]+=exp.amount;
+
+    const tr = document.createElement('tr');
+    let actionHTML = '';
+    if(isAdmin || exp.uid===currentUser.uid){
+      actionHTML = `
+        <button onclick="editExpense('${child.key}')">Edit</button>
+        <button onclick="deleteExpense('${child.key}')">Delete</button>
+      `;
+    }
+    tr.innerHTML = `<td>${exp.date}</td><td>${exp.name}</td><td>₹${exp.amount}</td><td>${exp.desc||''}</td><td>${actionHTML}</td>`;
+    expenseTableBody.appendChild(tr);
   });
 
   [total1P,total2P,total3P].forEach((el,i)=>{
@@ -298,15 +292,24 @@ async function loadExpenses(){
   });
 
   const sumAll = Object.values(totalMap).reduce((a,b)=>a+b,0);
-  totalAllP.textContent=`Total Expenses: ₹${sumAll}`;
+  totalAllP.textContent = `Total Expenses: ₹${sumAll}`;
 }
 
-// ---------- Delete Expense ----------
+// ---------- Delete & Edit ----------
 window.deleteExpense = async (key)=>{
-  if(confirm('Are you sure you want to delete this expense?')){
-    await db.ref('expenses/'+key).remove();
-    loadExpenses();
-  }
+  if(confirm('Delete this expense?')){ await db.ref('expenses/'+key).remove(); loadExpenses(); }
+}
+
+window.editExpense = async (key)=>{
+  const snap = await db.ref('expenses/'+key).once('value');
+  const exp = snap.val();
+  const newDate = prompt('Edit Date:', exp.date);
+  if(!newDate) return;
+  const newName = isAdmin ? prompt('Edit Name:', exp.name) : exp.name;
+  const newAmount = parseFloat(prompt('Edit Amount:', exp.amount));
+  const newDesc = prompt('Edit Description:', exp.desc||'');
+  await db.ref('expenses/'+key).update({date:newDate,name:newName,amount:newAmount,desc:newDesc});
+  loadExpenses();
 }
 
 // ---------- Initial Load ----------
