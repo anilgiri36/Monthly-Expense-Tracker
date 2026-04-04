@@ -1,7 +1,7 @@
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Roommate Expense Tracker</title>
 <style>
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f7f8; margin:0; padding:0; }
@@ -21,8 +21,9 @@ tr:nth-child(even){background-color:#f9f9f9;}
 .hidden{display:none;}
 .user-row{display:flex;justify-content:space-between;align-items:center;margin:5px 0;}
 .user-row button{width:auto;margin-left:10px;padding:5px 10px;}
-.legend{display:flex;justify-content:space-around;font-weight:bold;margin-bottom:15px;}
-.legend span{padding:5px 10px;border-radius:5px;}
+.balance-info {font-weight:bold; margin-bottom:5px;}
+.balance-owed {color: red;}
+.balance-owes {color: green;}
 </style>
 </head>
 <body>
@@ -30,30 +31,16 @@ tr:nth-child(even){background-color:#f9f9f9;}
 <div class="container">
 <h1>Roommate Expense Tracker</h1>
 
-<!-- MONTHLY BALANCE LEGEND -->
-<div class="section">
-  <h2>Monthly Balance Legend</h2>
-  <div class="legend">
-    <span style="color:green;">Owed – Paid more than your share</span>
-    <span style="color:red;">Owes – Paid less than your share</span>
-    <span style="color:black;">Settled – Even with your share</span>
-  </div>
-</div>
-
-<!-- MONTHLY BALANCE DISPLAY -->
-<div class="totals">
-  <div id="monthTotal1">Roommate 1: ₹0</div>
-  <div id="monthTotal2">Roommate 2: ₹0</div>
-  <div id="monthTotal3">Roommate 3: ₹0</div>
-  <div id="monthTotalAll">Total Paid: ₹0</div>
+<div id="balanceSummary" class="totals" style="margin-bottom: 30px; flex-wrap: wrap;">
+  <!-- Per user balance summary will be inserted here -->
 </div>
 
 <!-- SIGN-IN FORM -->
 <div id="signinDiv" class="section">
   <h2>Sign In</h2>
   <form id="signinForm">
-    <input type="text" id="username" placeholder="Username or Mobile" required>
-    <input type="password" id="password" placeholder="Password" required>
+    <input type="text" id="username" placeholder="Username or Mobile" required />
+    <input type="password" id="password" placeholder="Password" required />
     <button type="submit">Sign In</button>
   </form>
 </div>
@@ -63,17 +50,17 @@ tr:nth-child(even){background-color:#f9f9f9;}
   <div class="section">
     <h2>Admin Panel - Roommates</h2>
     <form id="adminForm">
-      <input type="text" id="roommateName1" placeholder="Roommate 1 Username">
-      <input type="text" id="roommateMobile1" placeholder="Roommate 1 Mobile (optional)">
-      <input type="password" id="roommatePass1" placeholder="Roommate 1 Password">
+      <input type="text" id="roommateName1" placeholder="Roommate 1 Username" />
+      <input type="text" id="roommateMobile1" placeholder="Roommate 1 Mobile (optional)" />
+      <input type="password" id="roommatePass1" placeholder="Roommate 1 Password" />
       
-      <input type="text" id="roommateName2" placeholder="Roommate 2 Username">
-      <input type="text" id="roommateMobile2" placeholder="Roommate 2 Mobile (optional)">
-      <input type="password" id="roommatePass2" placeholder="Roommate 2 Password">
+      <input type="text" id="roommateName2" placeholder="Roommate 2 Username" />
+      <input type="text" id="roommateMobile2" placeholder="Roommate 2 Mobile (optional)" />
+      <input type="password" id="roommatePass2" placeholder="Roommate 2 Password" />
       
-      <input type="text" id="roommateName3" placeholder="Roommate 3 Username">
-      <input type="text" id="roommateMobile3" placeholder="Roommate 3 Mobile (optional)">
-      <input type="password" id="roommatePass3" placeholder="Roommate 3 Password">
+      <input type="text" id="roommateName3" placeholder="Roommate 3 Username" />
+      <input type="text" id="roommateMobile3" placeholder="Roommate 3 Mobile (optional)" />
+      <input type="password" id="roommatePass3" placeholder="Roommate 3 Password" />
       
       <button type="submit">Save Roommates</button>
     </form>
@@ -84,9 +71,9 @@ tr:nth-child(even){background-color:#f9f9f9;}
   <div class="section">
     <h2>Change Admin Password</h2>
     <form id="changePassForm">
-      <input type="password" id="currentPass" placeholder="Current Password" required>
-      <input type="password" id="newPass" placeholder="New Password" required>
-      <input type="password" id="confirmPass" placeholder="Confirm New Password" required>
+      <input type="password" id="currentPass" placeholder="Current Password" required />
+      <input type="password" id="newPass" placeholder="New Password" required />
+      <input type="password" id="confirmPass" placeholder="Confirm New Password" required />
       <button type="submit">Change Password</button>
     </form>
   </div>
@@ -94,13 +81,21 @@ tr:nth-child(even){background-color:#f9f9f9;}
 
 <!-- EXPENSE TRACKER -->
 <div id="trackerDiv" class="hidden">
+
+  <div class="totals">
+    <div id="total1">Roommate 1: ₹0</div>
+    <div id="total2">Roommate 2: ₹0</div>
+    <div id="total3">Roommate 3: ₹0</div>
+    <div id="totalAll">Total: ₹0</div>
+  </div>
+
   <div class="section">
     <h2>Add Expense</h2>
     <form id="expenseForm">
-      <input type="date" id="date" required>
+      <input type="date" id="date" required />
       <select id="name" required></select>
-      <input type="number" id="amount" placeholder="Amount (₹)" min="1" required>
-      <input type="text" id="desc" placeholder="Description (optional)">
+      <input type="number" id="amount" placeholder="Amount (₹)" min="1" required />
+      <input type="text" id="desc" placeholder="Description (optional)" />
       <button type="submit">Add Expense</button>
     </form>
   </div>
@@ -111,17 +106,15 @@ tr:nth-child(even){background-color:#f9f9f9;}
     </thead>
     <tbody></tbody>
   </table>
-</div>
 
-<footer style="margin: 20px 0; color: gray;">
- <p>© 2026 Anil Giri. All rights reserved.</p>
-</footer>
+</div>
 
 <script>
 // Initialize users
 if(!localStorage.getItem('users')){
   localStorage.setItem('users', JSON.stringify([{username:'admin',password:'admin123',role:'admin'}]));
 }
+
 let users = JSON.parse(localStorage.getItem('users'));
 let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
 let currentUser = null;
@@ -142,25 +135,9 @@ const total2P = document.getElementById('total2');
 const total3P = document.getElementById('total3');
 const totalAllP = document.getElementById('totalAll');
 const roommateListDiv = document.getElementById('roommateList');
-const monthTotal1 = document.getElementById('monthTotal1');
-const monthTotal2 = document.getElementById('monthTotal2');
-const monthTotal3 = document.getElementById('monthTotal3');
-const monthTotalAll = document.getElementById('monthTotalAll');
+const balanceSummaryDiv = document.getElementById('balanceSummary');
 
-// ------------------ FUNCTIONS ------------------ //
-
-// Update name dropdown for expense entry
-function updateNameOptions(){
-  nameSelect.innerHTML = '';
-  roommates.forEach(r=>{
-    const opt = document.createElement('option');
-    opt.value = r.username || r.mobile;
-    opt.textContent = r.username || r.mobile;
-    nameSelect.appendChild(opt);
-  });
-}
-
-// ------------------ SIGN-IN ------------------ //
+// Sign-in
 signinForm.addEventListener('submit', e=>{
   e.preventDefault();
   const username = document.getElementById('username').value.trim();
@@ -177,13 +154,13 @@ signinForm.addEventListener('submit', e=>{
     updateNameOptions();
     updateTable();
   }
-  updateMonthlyBalances();
+  updateBalanceSummary();
 });
 
-// ------------------ ADMIN PANEL ------------------ //
+// Admin sets roommate accounts
 adminForm.addEventListener('submit', e=>{
   e.preventDefault();
-  roommates = [];
+  let newRoommates = [];
   const names = [
     document.getElementById('roommateName1').value.trim(),
     document.getElementById('roommateName2').value.trim(),
@@ -200,35 +177,43 @@ adminForm.addEventListener('submit', e=>{
     document.getElementById('roommatePass3').value
   ];
   
-  // Check for duplicates
-  let duplicateError = false;
-  let allUsers = users.filter(u=>u.role!=='roommate').map(u=>u.username);
-  let allMobiles = users.filter(u=>u.role!=='roommate').map(u=>u.mobile);
+  // Validate duplicates for usernames and mobiles
+  const allUsernames = users.filter(u => u.role !== 'roommate').map(u => u.username);
+  const allMobiles = users.filter(u => u.role !== 'roommate').map(u => u.mobile).filter(m => m);
   
-  for(let i=0;i<3;i++){
-    if((names[i] && allUsers.includes(names[i])) || (mobiles[i] && allMobiles.includes(mobiles[i]))){
-      duplicateError = true;
-      break;
+  for(let i=0; i<3; i++){
+    if(names[i] || mobiles[i]) {
+      if(passwords[i].length === 0) {
+        alert(`Password required for roommate #${i+1}`);
+        return;
+      }
+      // Check duplicates
+      if(names[i] && (allUsernames.includes(names[i]) || newRoommates.some(r=>r.username===names[i]))){
+        alert(`Username "${names[i]}" already exists.`);
+        return;
+      }
+      if(mobiles[i] && (allMobiles.includes(mobiles[i]) || newRoommates.some(r=>r.mobile===mobiles[i]))){
+        alert(`Mobile "${mobiles[i]}" already exists.`);
+        return;
+      }
+      newRoommates.push({username: names[i] || mobiles[i], mobile: mobiles[i] || '', password: passwords[i], role:'roommate'});
     }
   }
-  if(duplicateError){ alert('Username or Mobile already exists!'); return; }
-
-  for(let i=0;i<3;i++){
-    if((names[i] || mobiles[i]) && passwords[i]){
-      roommates.push({username:names[i],mobile:mobiles[i],password:passwords[i],role:'roommate'});
-    }
-  }
-
-  // Update users
-  users = users.filter(u=>u.role!=='roommate').concat(roommates);
+  
+  // Update users and roommates
+  users = users.filter(u=>u.role!=='roommate').concat(newRoommates);
+  roommates = newRoommates;
+  
   localStorage.setItem('users', JSON.stringify(users));
   localStorage.setItem('roommates', JSON.stringify(roommates));
+  
   updateRoommateList();
   alert('Roommates saved!');
   adminForm.reset();
+  updateBalanceSummary();
 });
 
-// ------------------ CHANGE PASSWORD ------------------ //
+// Admin changes password
 changePassForm.addEventListener('submit', e=>{
   e.preventDefault();
   const curr = document.getElementById('currentPass').value;
@@ -244,44 +229,53 @@ changePassForm.addEventListener('submit', e=>{
   changePassForm.reset();
 });
 
-// ------------------ EXPENSE ENTRY ------------------ //
+// Update name dropdown
+function updateNameOptions(){
+  nameSelect.innerHTML = '';
+  roommates.forEach(r=>{
+    const opt = document.createElement('option');
+    opt.value = r.username; 
+    opt.textContent = r.username + (r.mobile ? ` (${r.mobile})` : '');
+    nameSelect.appendChild(opt);
+  });
+}
+
+// Add expense
 expenseForm.addEventListener('submit', e=>{
   e.preventDefault();
   const date = document.getElementById('date').value;
   const name = document.getElementById('name').value;
   const amount = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value.trim();
-
-  // Normal users can only add their own
-  if(currentUser.role!=='admin' && name !== (currentUser.username || currentUser.mobile)){
-    alert('You can only add expenses for yourself!');
+  if(!date || !name || !amount || amount <=0){ alert('Fill all fields correctly'); return; }
+  // Validate that current user can only add expenses under their own username
+  if(currentUser.username !== name){
+    alert("You can only add expenses under your own username.");
     return;
   }
-
-  if(!date || !name || !amount || amount <=0){ alert('Fill all fields correctly'); return; }
   expenses.push({date,name,amount,desc});
   localStorage.setItem('expenses', JSON.stringify(expenses));
   updateTable();
-  updateMonthlyBalances();
+  updateBalanceSummary();
   expenseForm.reset();
 });
 
-// ------------------ DELETE EXPENSE ------------------ //
+// Delete expense - only admin
 function deleteExpense(index){
   if(currentUser.role!=='admin'){ alert('Only admin can delete'); return; }
   if(confirm('Are you sure to delete this expense?')){
     expenses.splice(index,1);
     localStorage.setItem('expenses', JSON.stringify(expenses));
     updateTable();
-    updateMonthlyBalances();
+    updateBalanceSummary();
   }
 }
 
-// ------------------ UPDATE TABLE ------------------ //
+// Update table & totals
 function updateTable(){
   expenseTableBody.innerHTML = '';
   let total = {};
-  roommates.forEach(r=>total[r.username || r.mobile]=0);
+  roommates.forEach(r=>total[r.username]=0);
   expenses.forEach(({date,name,amount,desc}, i)=>{
     const tr = document.createElement('tr');
     const actionHTML = currentUser.role==='admin' ? `<span class="delete-btn" onclick="deleteExpense(${i})">Delete</span>` : '';
@@ -289,71 +283,113 @@ function updateTable(){
     expenseTableBody.appendChild(tr);
     if(total[name]!==undefined) total[name]+=amount;
   });
+  total1P.textContent = `${roommates[0]?.username || 'Roommate 1'}: ₹${total[roommates[0]?.username]||0}`;
+  total2P.textContent = `${roommates[1]?.username || 'Roommate 2'}: ₹${total[roommates[1]?.username]||0}`;
+  total3P.textContent = `${roommates[2]?.username || 'Roommate 3'}: ₹${total[roommates[2]?.username]||0}`;
+  const sumAll = Object.values(total).reduce((a,b)=>a+b,0);
+  totalAllP.textContent = `Total: ₹${sumAll}`;
 }
 
-// ------------------ MONTHLY BALANCES ------------------ //
-function updateMonthlyBalances() {
-  const now = new Date();
-  const month = now.getMonth();
-  const year = now.getFullYear();
-
-  let monthlyPaid = {};
-  roommates.forEach(r => monthlyPaid[r.username || r.mobile] = 0);
-
-  expenses.forEach(exp => {
-    const expDate = new Date(exp.date);
-    if(expDate.getMonth() === month && expDate.getFullYear() === year){
-      if(monthlyPaid[exp.name] !== undefined) monthlyPaid[exp.name] += exp.amount;
-    }
-  });
-
-  const totalMonth = Object.values(monthlyPaid).reduce((a,b)=>a+b,0);
-  const numRoommates = roommates.length;
-  const share = totalMonth / numRoommates;
-
-  function formatBalance(nameKey){
-    const diff = monthlyPaid[nameKey] - share;
-    if(diff > 0) return `<span style="color:green;">Owed – ₹${diff.toFixed(0)}</span>`;
-    else if(diff < 0) return `<span style="color:red;">Owes – ₹${Math.abs(diff).toFixed(0)}</span>`;
-    else return `<span>Settled – ₹0</span>`;
-  }
-
-  monthTotal1.innerHTML = `${roommates[0]?.username || roommates[0]?.mobile || 'Roommate 1'}: ${formatBalance(roommates[0]?.username || roommates[0]?.mobile)}`;
-  monthTotal2.innerHTML = `${roommates[1]?.username || roommates[1]?.mobile || 'Roommate 2'}: ${formatBalance(roommates[1]?.username || roommates[1]?.mobile)}`;
-  monthTotal3.innerHTML = `${roommates[2]?.username || roommates[2]?.mobile || 'Roommate 3'}: ${formatBalance(roommates[2]?.username || roommates[2]?.mobile)}`;
-  monthTotalAll.textContent = `Total Paid: ₹${totalMonth}`;
-}
-
-// ------------------ ROOMMATE LIST ------------------ //
+// Update roommate list for admin
 function updateRoommateList(){
   roommateListDiv.innerHTML = '';
   roommates.forEach((r,i)=>{
     const div = document.createElement('div');
     div.className = 'user-row';
-    div.innerHTML = `<span>${r.username || r.mobile}</span><button onclick="deleteRoommate(${i})">Delete</button>`;
+    div.innerHTML = `<span>${r.username}${r.mobile ? ' ('+r.mobile+')' : ''}</span><button onclick="deleteRoommate(${i})">Delete</button>`;
     roommateListDiv.appendChild(div);
   });
   updateNameOptions();
 }
 
-// ------------------ DELETE ROOMMATE ------------------ //
+// Delete roommate
 function deleteRoommate(index){
   if(confirm('Are you sure to delete this roommate? This will not delete existing expenses.')){
     const removed = roommates.splice(index,1);
-    users = users.filter(u=>u.username!==removed[0].username && u.mobile!==removed[0].mobile);
+    users = users.filter(u=>u.username!==removed[0].username);
     localStorage.setItem('users', JSON.stringify(users));
     localStorage.setItem('roommates', JSON.stringify(roommates));
     updateRoommateList();
     alert('Roommate deleted!');
+    updateBalanceSummary();
   }
 }
 
-// ------------------ INITIALIZE ------------------ //
+// Update balance summary for all roommates
+function updateBalanceSummary(){
+  if(!currentUser) return;
+  balanceSummaryDiv.innerHTML = '';
+  if(roommates.length === 0) return;
+
+  // Calculate total expenses and per user totals for the current month
+  let totalPaid = 0;
+  let totals = {};
+  roommates.forEach(r => { totals[r.username] = 0; });
+
+  // Get current month/year
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  expenses.forEach(({date,name,amount})=>{
+    const expenseDate = new Date(date);
+    if(expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear){
+      if(totals.hasOwnProperty(name)) totals[name] += amount;
+      totalPaid += amount;
+    }
+  });
+
+  // Calculate fair share per roommate
+  const share = totalPaid / roommates.length;
+
+  roommates.forEach(r => {
+    const paid = totals[r.username];
+    const balance = paid - share;
+    const div = document.createElement('div');
+
+    // Label and color according to balance
+    let label = '';
+    let colorClass = '';
+    if(balance > 0){
+      label = 'Owed';
+      colorClass = 'balance-owed';
+    } else if(balance < 0){
+      label = 'Owes';
+      colorClass = 'balance-owes';
+    } else {
+      label = 'Settled';
+      colorClass = '';
+    }
+    div.className = `totals ${colorClass}`;
+    div.innerHTML = `<div class="balance-info"><strong>${r.username}:</strong> ${label} – ₹${Math.abs(balance).toFixed(2)}</div>`;
+    balanceSummaryDiv.appendChild(div);
+  });
+
+  // Total paid summary
+  const totalDiv = document.createElement('div');
+  totalDiv.className = 'totals';
+  totalDiv.style.width = '28%';
+  totalDiv.style.backgroundColor = '#E91E63';
+  totalDiv.style.color = 'white';
+  totalDiv.style.padding = '15px';
+  totalDiv.style.borderRadius = '8px';
+  totalDiv.style.textAlign = 'center';
+  totalDiv.style.fontWeight = 'bold';
+  totalDiv.style.marginBottom = '10px';
+  totalDiv.textContent = `Total Paid: ₹${totalPaid.toFixed(2)}`;
+  balanceSummaryDiv.appendChild(totalDiv);
+}
+
+// Initialize page
 updateNameOptions();
 updateTable();
 updateRoommateList();
-updateMonthlyBalances();
+updateBalanceSummary();
 </script>
+
+<footer style="margin: 20px 0; color: gray; text-align:center;">
+ <p>© 2026 Anil Giri. All rights reserved.</p>
+</footer>
 
 </body>
 </html>
