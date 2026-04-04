@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -96,7 +97,7 @@ tr:nth-child(even){background-color:#f9f9f9;}
 
 </div>
 
-</div> <!-- ✅ FIXED: container CLOSED -->
+</div>
 
 <script>
 // your same JS (unchanged)
