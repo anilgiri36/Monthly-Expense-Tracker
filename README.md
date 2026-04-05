@@ -20,15 +20,16 @@ table{border-collapse:collapse;width:100%;margin-top:20px;}
 th,td{border:1px solid #ddd;padding:10px;text-align:center;}
 th{background-color:#E91E63;color:white;}
 tr:nth-child(even){background-color:#f9f9f9;}
-.totals-container{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
-.totals-card{padding:15px;border-radius:8px;text-align:center;font-weight:bold;margin-bottom:10px;width:28%;}
-.totals.owed{background:#4caf50;color:white;}
-.totals.owes{background:#f44336;color:white;}
+.totals{display:flex;justify-content:space-around;margin-bottom:20px;flex-wrap:wrap;}
+.totals div{padding:15px;border-radius:8px;width:28%;text-align:center;font-weight:bold;margin-bottom:10px;}
+.totals .owed {background:#4caf50;color:white;}
+.totals .owes {background:#f44336;color:white;}
 .section{background:#fafafa;padding:15px;border-radius:8px;margin-bottom:20px;}
 .hidden{display:none;}
 .user-row{display:flex;justify-content:space-between;margin:5px 0;}
 #userInfo { position:absolute; top:20px; right:20px; font-weight:bold; color:#E91E63; }
 #userInfo a{margin-left:10px; color:#E91E63; text-decoration:none;}
+.totals-card {margin-bottom:5px;}
 </style>
 </head>
 
@@ -70,6 +71,7 @@ tr:nth-child(even){background-color:#f9f9f9;}
       <input type="password" id="roommatePass3" placeholder="Password">
       <button type="submit">Save Roommates</button>
     </form>
+
     <h3>Existing Roommates</h3>
     <div id="roommateList"></div>
   </div>
@@ -77,12 +79,11 @@ tr:nth-child(even){background-color:#f9f9f9;}
 
 <div id="trackerDiv" class="hidden">
 
-  <!-- Top Totals -->
-  <div class="totals-container">
-    <div id="total1" class="totals-card totals owed">Roommate 1: ₹0</div>
-    <div id="total2" class="totals-card totals owed">Roommate 2: ₹0</div>
-    <div id="total3" class="totals-card totals owed">Roommate 3: ₹0</div>
-    <div id="totalAll" class="totals-card totals owed">Total Expenses: ₹0</div>
+  <div class="totals">
+    <div id="total1" class="totals-card owed">₹0</div>
+    <div id="total2" class="totals-card owed">₹0</div>
+    <div id="total3" class="totals-card owed">₹0</div>
+    <div id="totalAll" class="totals-card owed">₹0</div>
   </div>
 
   <div class="section">
@@ -93,6 +94,16 @@ tr:nth-child(even){background-color:#f9f9f9;}
       <input type="number" id="amount" placeholder="Amount (₹)" min="1" required>
       <input type="text" id="desc" placeholder="Description (optional)">
       <button type="submit">Add Expense</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2>Filter Expenses by Date</h2>
+    <form id="filterForm">
+      <input type="date" id="startDate">
+      <input type="date" id="endDate">
+      <button type="submit">Apply Filter</button>
+      <button type="button" id="resetFilter">Reset Filter</button>
     </form>
   </div>
 
@@ -128,7 +139,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.database();
 
-// ---------- DOM ----------
+// ---------- DOM Elements ----------
 const signinDiv = document.getElementById('signinDiv');
 const adminDiv = document.getElementById('adminDiv');
 const trackerDiv = document.getElementById('trackerDiv');
@@ -145,43 +156,43 @@ const roommateListDiv = document.getElementById('roommateList');
 const userNameDisplay = document.getElementById('userNameDisplay');
 const signOutLink = document.getElementById('signOutLink');
 const adminLoginLink = document.getElementById('adminLoginLink');
-const homePage = document.getElementById('homePage');
+const filterForm = document.getElementById('filterForm');
+const startDateInput = document.getElementById('startDate');
+const endDateInput = document.getElementById('endDate');
+const resetFilterBtn = document.getElementById('resetFilter');
 
 let currentUser = null;
 let roommates = [];
-let currentUsername = '';
+let expenses = [];
 let isAdmin = false;
 
-// ---------- Sign In ----------
-signinForm.addEventListener('submit', async e=>{
+// ---------- Firebase Auth ----------
+signinForm.addEventListener('submit', e=>{
   e.preventDefault();
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
 
-  try{
-    const email = username.includes('@') ? username : username + '@example.com';
-    const cred = await auth.signInWithEmailAndPassword(email, password);
+  auth.signInWithEmailAndPassword(username, password)
+  .then(cred=>{
     currentUser = cred.user;
-
-    const snapshot = await db.ref('users/' + currentUser.uid).once('value');
-    const data = snapshot.val();
-    if(!data){ alert('User data not found'); return; }
-
-    currentUsername = data.username;
-    userNameDisplay.textContent = currentUsername;
+    userNameDisplay.textContent = username;
     userNameDisplay.classList.remove('hidden');
     signOutLink.classList.remove('hidden');
     adminLoginLink.classList.add('hidden');
     signinDiv.classList.add('hidden');
     homePage.classList.add('hidden');
 
-    isAdmin = data.role==='admin';
-    if(isAdmin) adminDiv.classList.remove('hidden');
-    trackerDiv.classList.remove('hidden');
-
-    await loadRoommates();
-    await loadExpenses();
-  }catch(err){ alert(err.message); }
+    db.ref('users/' + currentUser.uid).once('value').then(snapshot=>{
+      const data = snapshot.val();
+      if(!data) { alert('User role not found'); return; }
+      isAdmin = data.role==='admin';
+      if(isAdmin) adminDiv.classList.remove('hidden');
+      trackerDiv.classList.remove('hidden');
+      loadRoommates();
+      loadExpenses();
+    });
+  })
+  .catch(err=>alert(err.message));
 });
 
 // ---------- Sign Out ----------
@@ -191,7 +202,7 @@ signOutLink.addEventListener('click', e=>{
 });
 
 // ---------- Admin Adds Roommates ----------
-adminForm.addEventListener('submit', async e=>{
+adminForm.addEventListener('submit', e=>{
   e.preventDefault();
   const names = [
     document.getElementById('roommateName1').value.trim(),
@@ -204,65 +215,90 @@ adminForm.addEventListener('submit', async e=>{
     document.getElementById('roommatePass3').value
   ];
 
-  for(let i=0;i<names.length;i++){
-    if(names[i] && passwords[i]){
-      const snap = await db.ref('users').orderByChild('username').equalTo(names[i]).once('value');
-      if(snap.exists()){ alert('Username exists: ' + names[i]); continue; }
-      const email = names[i].includes('@') ? names[i] : names[i] + '@example.com';
-      try{
-        const userCred = await auth.createUserWithEmailAndPassword(email,passwords[i]);
-        await db.ref('users/' + userCred.user.uid).set({username:names[i],role:'roommate'});
-      }catch(err){ alert(err.message); }
+  names.forEach((name,i)=>{
+    if(name && passwords[i]){
+      db.ref('users').orderByChild('username').equalTo(name).once('value',snap=>{
+        if(snap.exists()){ alert('Username exists: ' + name); return; }
+        auth.createUserWithEmailAndPassword(name,passwords[i])
+        .then(userCred=>{
+          db.ref('users/' + userCred.user.uid).set({username:name,role:'roommate'});
+          loadRoommates();
+        })
+        .catch(err=>alert(err.message));
+      });
     }
-  }
+  });
   adminForm.reset();
-  await loadRoommates();
 });
 
 // ---------- Load Roommates ----------
-async function loadRoommates(){
-  const snap = await db.ref('users').once('value');
-  roommates=[];
-  roommateListDiv.innerHTML='';
-  nameSelect.innerHTML='';
+function loadRoommates(){
+  db.ref('users').once('value').then(snap=>{
+    roommates=[];
+    roommateListDiv.innerHTML='';
+    nameSelect.innerHTML='';
+    snap.forEach(child=>{
+      const u = child.val();
+      if(u.role==='roommate'){
+        roommates.push({uid:child.key, username:u.username});
 
-  snap.forEach(child=>{
-    const u = child.val();
-    if(u.role==='roommate'){
-      roommates.push({uid:child.key, username:u.username});
-      const opt = document.createElement('option');
-      opt.value = u.username; opt.textContent = u.username;
-      nameSelect.appendChild(opt);
+        // show in admin list with delete button
+        const div = document.createElement('div');
+        div.className='user-row';
+        div.innerHTML=`
+          <span>${u.username}</span>
+          ${isAdmin?`<button onclick="deleteRoommate('${child.key}','${u.username}')">Delete User</button>`:''}
+        `;
+        roommateListDiv.appendChild(div);
 
-      const div = document.createElement('div');
-      div.className='user-row';
-      div.innerHTML=`<span>${u.username}</span>`;
-      roommateListDiv.appendChild(div);
-    }
+        // add to select dropdown for expense form
+        const opt = document.createElement('option');
+        opt.value = u.username; opt.textContent = u.username;
+        nameSelect.appendChild(opt);
+      }
+    });
   });
 }
 
+// ---------- Delete Roommate ----------
+function deleteRoommate(uid, username){
+  if(confirm(`Are you sure you want to delete user "${username}"?`)){
+    db.ref('users/' + uid).remove()
+    .then(()=>{ alert(`User "${username}" deleted.`); loadRoommates(); loadExpenses(); })
+    .catch(err=>alert('Error deleting user: '+err.message));
+  }
+}
+
 // ---------- Add Expense ----------
-expenseForm.addEventListener('submit', async e=>{
+expenseForm.addEventListener('submit', e=>{
   e.preventDefault();
   const date = document.getElementById('date').value;
   const name = document.getElementById('name').value;
   const amount = parseFloat(document.getElementById('amount').value);
   const desc = document.getElementById('desc').value.trim();
 
-  if(!isAdmin && name!==currentUsername){
-    alert('You can only add expense for yourself!');
-    return;
-  }
-
   const newExpense = {date,name,amount,desc,uid:currentUser.uid};
-  await db.ref('expenses').push(newExpense);
-  expenseForm.reset();
+  db.ref('expenses').push(newExpense).then(()=>{
+    loadExpenses();
+    expenseForm.reset();
+  });
+});
+
+// ---------- Filter Expenses ----------
+filterForm.addEventListener('submit', e=>{
+  e.preventDefault();
+  const start = startDateInput.value ? new Date(startDateInput.value) : null;
+  const end = endDateInput.value ? new Date(endDateInput.value) : null;
+  loadExpenses(start,end);
+});
+
+resetFilterBtn.addEventListener('click', ()=>{
+  startDateInput.value=''; endDateInput.value='';
   loadExpenses();
 });
 
 // ---------- Load Expenses ----------
-async function loadExpenses(){
+async function loadExpenses(startDate=null,endDate=null){
   const snap = await db.ref('expenses').once('value');
   const totalMap = {};
   roommates.forEach(r=> totalMap[r.username]=0);
@@ -270,10 +306,14 @@ async function loadExpenses(){
 
   snap.forEach(child=>{
     const exp = child.val();
+    const expDate = new Date(exp.date);
+
+    if((startDate && expDate<startDate)||(endDate && expDate>endDate)) return;
+
     if(totalMap[exp.name]!==undefined) totalMap[exp.name]+=exp.amount;
 
-    const tr = document.createElement('tr');
-    let actionHTML = '';
+    const tr=document.createElement('tr');
+    let actionHTML='';
     if(isAdmin || exp.uid===currentUser.uid){
       actionHTML = `
         <button onclick="editExpense('${child.key}')">Edit</button>
@@ -288,28 +328,26 @@ async function loadExpenses(){
     const uname = roommates[i]?.username || 'Roommate '+(i+1);
     const amt = totalMap[uname] || 0;
     el.textContent = `${uname}: ₹${amt}`;
-    el.className = amt>0 ? 'totals-card totals owed' : 'totals-card totals owes';
+    el.className = amt>0?'totals-card totals owed':'totals-card totals owes';
   });
 
   const sumAll = Object.values(totalMap).reduce((a,b)=>a+b,0);
   totalAllP.textContent = `Total Expenses: ₹${sumAll}`;
 }
 
-// ---------- Delete & Edit ----------
-window.deleteExpense = async (key)=>{
-  if(confirm('Delete this expense?')){ await db.ref('expenses/'+key).remove(); loadExpenses(); }
+// ---------- Delete Expense ----------
+window.deleteExpense = function(key){
+  if(confirm('Delete this expense?')){
+    db.ref('expenses/'+key).remove().then(()=> loadExpenses());
+  }
 }
 
-window.editExpense = async (key)=>{
-  const snap = await db.ref('expenses/'+key).once('value');
-  const exp = snap.val();
-  const newDate = prompt('Edit Date:', exp.date);
-  if(!newDate) return;
-  const newName = isAdmin ? prompt('Edit Name:', exp.name) : exp.name;
-  const newAmount = parseFloat(prompt('Edit Amount:', exp.amount));
-  const newDesc = prompt('Edit Description:', exp.desc||'');
-  await db.ref('expenses/'+key).update({date:newDate,name:newName,amount:newAmount,desc:newDesc});
-  loadExpenses();
+// ---------- Edit Expense ----------
+window.editExpense = function(key){
+  const newAmt = prompt('Enter new amount:');
+  if(newAmt){
+    db.ref('expenses/'+key+'/amount').set(parseFloat(newAmt)).then(()=> loadExpenses());
+  }
 }
 
 // ---------- Initial Load ----------
