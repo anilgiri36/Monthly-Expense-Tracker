@@ -120,7 +120,7 @@ tr:nth-child(even){background-color:#f9f9f9;}
 
 <footer style="text-align:center; margin:20px; color:gray;">
   <p>© 2026 Anil Giri. All rights reserved.</p>
-  <marquee><p style="color:green; font-weight:bold;">A page created by Anil Giri</p></marquee>
+  <marquee><p style="color:green; font-weight:bold;">Page created by Anil Giri</p></marquee>
 </footer>
 
 <script>
